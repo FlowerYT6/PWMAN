@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Offline Password Manager</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    h2 { margin-top: 40px; }
+    input, select, button { margin: 5px; padding: 5px; }
+    table { border-collapse: collapse; margin-top: 10px; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+  </style>
+</head>
+<body>
+
+<h1>Password Manager</h1>
+
+<!-- ========== EMAIL SAVER ========== -->
+<h2>📧 Save Email Address</h2>
+<input id="emailLabel" placeholder="Label (e.g. Work)">
+<input id="emailAddress" placeholder="Email (e.g. you@example.com)">
+<button onclick="saveEmail()">Save Email</button>
+
+<!-- ========== LOGIN SAVER ========== -->
+<h2>🔐 Save Login Credential</h2>
+<input id="siteName" placeholder="Website/App Name">
+<input id="username" placeholder="Username/Email">
+<input id="password" placeholder="Password">
+<button onclick="saveLogin()">Save Login</button>
+
+<!-- ========== WIFI SAVER ========== -->
+<h2>📶 Save Wi-Fi Info</h2>
+<input id="ssid" placeholder="SSID (WiFi Name)">
+<input id="wifiPassword" placeholder="Wi-Fi Password">
+<select id="security">
+  <option>WPA2</option>
+  <option>WPA3</option>
+  <option>WEP</option>
+</select>
+<select id="signal">
+  <option>2.4GHz</option>
+  <option>5GHz</option>
+</select>
+<button onclick="saveWiFi()">Save WiFi</button>
+
+<!-- ========== EXPORT/IMPORT ========== -->
+<h2>📁 Export/Import</h2>
+<button onclick="exportCSV()">Export to CSV</button>
+<input type="file" id="importFile" accept=".csv">
+<button onclick="importCSV()">Import CSV</button>
+
+<!-- ========== TABLE DISPLAY ========== -->
+<h2>📋 All Entries</h2>
+<table id="dataTable">
+  <thead>
+    <tr><th>Type</th><th>Label</th><th>Details</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+let entries = [];
+
+function updateTable() {
+  const tbody = document.querySelector("#dataTable tbody");
+  tbody.innerHTML = "";
+  entries.forEach(e => {
+    let row = `<tr>
+      <td>${e.type}</td>
+      <td>${e.label}</td>
+      <td>${e.details}</td>
+    </tr>`;
+    tbody.innerHTML += row;
+  });
+}
+
+function saveEmail() {
+  const label = document.getElementById("emailLabel").value;
+  const email = document.getElementById("emailAddress").value;
+  if (!label || !email) return alert("Please fill both email fields.");
+  entries.push({ type: "Email", label, details: email });
+  updateTable();
+}
+
+function saveLogin() {
+  const label = document.getElementById("siteName").value;
+  const user = document.getElementById("username").value;
+  const pass = document.getElementById("password").value;
+  if (!label || !user || !pass) return alert("Fill all login fields.");
+  entries.push({ type: "Login", label, details: `User: ${user} | Pass: ${pass}` });
+  updateTable();
+}
+
+function saveWiFi() {
+  const label = document.getElementById("ssid").value;
+  const pass = document.getElementById("wifiPassword").value;
+  const security = document.getElementById("security").value;
+  const signal = document.getElementById("signal").value;
+  if (!label || !pass) return alert("Fill all Wi-Fi fields.");
+  entries.push({ type: "WiFi", label, details: `Pass: ${pass} | Sec: ${security} | Signal: ${signal}` });
+  updateTable();
+}
+
+function exportCSV() {
+  let csv = "Type,Label,Details\n";
+  entries.forEach(e => {
+    csv += `"${e.type}","${e.label}","${e.details}"\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "password_manager_data.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importCSV() {
+  const file = document.getElementById("importFile").files[0];
+  if (!file) return alert("Choose a CSV file.");
+  const reader = new FileReader();
+  reader.onload = () => {
+    const lines = reader.result.split("\n").slice(1); // skip header
+    lines.forEach(line => {
+      if (line.trim() === "") return;
+      const [type, label, details] = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/^"|"$/g, ""));
+      entries.push({ type, label, details });
+    });
+    updateTable();
+  };
+  reader.readAsText(file);
+}
+</script>
+
+</body>
+</html>
